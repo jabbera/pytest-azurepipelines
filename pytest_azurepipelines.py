@@ -201,7 +201,7 @@ def pytest_terminal_summary(terminalreporter):
                 print("##vso[task.logissue type=warning;]DONE:{0}".format(covpath))
                 print("##vso[task.logissue type=warning;]{0}".format("Getting dockr mappings info"))
                 print("##vso[task.logissue type=warning;]{0}".format(reportdir))
-                reportdir = apply_docker_mappings(mountinfo, reportdir)
+                reportdir = "/__w/1/s/htmlcov"
                 print("##vso[task.logissue type=warning;]DONE:{0}".format(reportdir))
 
             try_to_inline_css_into_each_html_report_file(reportdir)
