@@ -195,11 +195,14 @@ def pytest_terminal_summary(terminalreporter):
         if os.path.exists(covpath):
             mountinfo = _get_docker_mountinfo(terminalreporter.config)
             if mountinfo:
+                print("##vso[task.logissue type=warning;]{0}".format("Getting dockr mappings covpath"))
+                print("##vso[task.logissue type=warning;]{0}".format(covpath))
                 covpath = apply_docker_mappings(mountinfo, covpath)
-                print("##vso[task.logissue type=warning;]{0}".format("Getting docek mappings info"))
+                print("##vso[task.logissue type=warning;]DONE:{0}".format(covpath))
+                print("##vso[task.logissue type=warning;]{0}".format("Getting dockr mappings info"))
                 print("##vso[task.logissue type=warning;]{0}".format(reportdir))
                 reportdir = apply_docker_mappings(mountinfo, reportdir)
-                print("##vso[task.logissue type=warning;]{0}".format(reportdir))
+                print("##vso[task.logissue type=warning;]DONE:{0}".format(reportdir))
 
             try_to_inline_css_into_each_html_report_file(reportdir)
             print(
