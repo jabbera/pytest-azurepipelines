@@ -142,12 +142,17 @@ def pytest_sessionfinish(session, exitstatus):
         os.path.abspath(os.path.expanduser(os.path.expandvars(xmlpath)))
     )
     mountinfo = None
+
+    print("##vso[task.logissue type=warning;]{0}".format("Getting mount info"))
     if not session.config.getoption("no_docker_discovery") and os.path.isfile('/.dockerenv'):
+        print("##vso[task.logissue type=warning;]{0}".format("Reading mount info"))
         with io.open(
                     '/proc/1/mountinfo', 'rb',
                 ) as fobj:
             mountinfo = fobj.read()
+
         mountinfo = mountinfo.decode(sys.getfilesystemencoding())
+        print("##vso[task.logissue type=warning;]{0}: {1}".format("Getting mount info", mountinfo))
     if mountinfo:
         xmlabspath = apply_docker_mappings(mountinfo, xmlabspath)
 
