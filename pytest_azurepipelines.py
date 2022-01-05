@@ -176,11 +176,8 @@ def pytest_sessionfinish(session, exitstatus):
         )
         reportdir = os.path.normpath(os.path.abspath("htmlcov"))
         if os.path.exists(covpath):
-            if mountinfo:
-                covpath = apply_docker_mappings(mountinfo, covpath)
-                reportdir = apply_docker_mappings(mountinfo, reportdir)
-
             try_to_inline_css_into_each_html_report_file(reportdir)
+            
             print(
                 "##vso[codecoverage.publish codecoveragetool=Cobertura;summaryfile={0};reportdirectory={1};]".format(
                     covpath, reportdir
