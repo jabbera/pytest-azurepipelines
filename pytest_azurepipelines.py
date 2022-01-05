@@ -156,6 +156,7 @@ def pytest_sessionfinish(session, exitstatus):
     if mountinfo:
         xmlabspath = apply_docker_mappings(mountinfo, xmlabspath)
 
+
     # Set the run title in the UI to a configurable setting
     description = session.config.option.azure_run_title.replace("'", "")
 
@@ -183,7 +184,10 @@ def pytest_sessionfinish(session, exitstatus):
         if os.path.exists(covpath):
             if mountinfo:
                 covpath = apply_docker_mappings(mountinfo, covpath)
+                print("##vso[task.logissue type=warning;]{0}".format("Getting docek mappings info"))
+                print("##vso[task.logissue type=warning;]{0}".format(reportdir))
                 reportdir = apply_docker_mappings(mountinfo, reportdir)
+                print("##vso[task.logissue type=warning;]{0}".format(reportdir))
 
             try_to_inline_css_into_each_html_report_file(reportdir)
             print(
@@ -213,7 +217,9 @@ def apply_docker_mappings(mountinfo, dockerpath):
             continue
         docker_mnt_path = words[4]
         host_mnt_path = words[3]
+        print("##vso[task.logissue type=warning;]{0} {1} {2}".format("TEST", host_mnt_path, docker_mnt_path))
         if dockerpath.startswith(docker_mnt_path):
+            print("##vso[task.logissue type=warning;]{0} {1} {2}".format("MATCHED", dockerpath, docker_mnt_path))
             dockerpath = ''.join([
                 host_mnt_path,
                 dockerpath[len(docker_mnt_path):],
