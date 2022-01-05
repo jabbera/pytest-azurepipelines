@@ -127,6 +127,19 @@ def try_to_inline_css_into_each_html_report_file(reportdir):
             )
         )
 
+def _get_docker_mountinfo(config):
+    """
+    Check docker discovery is not disabled and presence of docker and if
+    relevant return the docker mount information.
+    """
+    mountinfo = None
+    if not config.getoption("no_docker_discovery") and os.path.isfile('/.dockerenv'):
+        with io.open(
+                    '/proc/1/mountinfo', 'rb',
+                ) as fobj:
+            mountinfo = fobj.read()
+        mountinfo = mountinfo.decode(sys.getfilesystemencoding())
+    return mountinfo
 
 @pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):
@@ -144,15 +157,9 @@ def pytest_sessionfinish(session, exitstatus):
     mountinfo = None
 
     print("##vso[task.logissue type=warning;]{0}".format("Getting mount info"))
-    if not session.config.getoption("no_docker_discovery") and os.path.isfile('/.dockerenv'):
-        print("##vso[task.logissue type=warning;]{0}".format("Reading mount info"))
-        with io.open(
-                    '/proc/1/mountinfo', 'rb',
-                ) as fobj:
-            mountinfo = fobj.read()
-
-        mountinfo = mountinfo.decode(sys.getfilesystemencoding())
-        print("##vso[task.logissue type=warning;]{0}: {1}".format("Getting mount info", mountinfo))
+    
+    mountinfo = _get_docker_mountinfo(session.config)
+    print("##vso[task.logissue type=warning;]{0}: {1}".format("Getting mount info", mountinfo))
     if mountinfo:
         xmlabspath = apply_docker_mappings(mountinfo, xmlabspath)
 
@@ -176,12 +183,17 @@ def pytest_sessionfinish(session, exitstatus):
             )
         )
 
-    if not session.config.getoption("no_coverage_upload") and not session.config.getoption("no_docker_discovery") and session.config.pluginmanager.has_plugin("pytest_cov"):
+def pytest_terminal_summary(terminalreporter):
+    no_coverage_upload = terminalreporter.config.getoption("no_coverage_upload")
+    no_docker_discovery = terminalreporter.config.getoption("no_docker_discovery")
+    has_pytest_cov = terminalreporter.config.pluginmanager.has_plugin("pytest_cov")
+    if not no_coverage_upload and not no_docker_discovery and has_pytest_cov:
         covpath = os.path.normpath(
             os.path.abspath(os.path.expanduser(os.path.expandvars(DEFAULT_COVERAGE_PATH)))
         )
         reportdir = os.path.normpath(os.path.abspath("htmlcov"))
         if os.path.exists(covpath):
+            mountinfo = _get_docker_mountinfo(terminalreporter.config)
             if mountinfo:
                 covpath = apply_docker_mappings(mountinfo, covpath)
                 print("##vso[task.logissue type=warning;]{0}".format("Getting docek mappings info"))
@@ -217,7 +229,7 @@ def apply_docker_mappings(mountinfo, dockerpath):
             continue
         docker_mnt_path = words[4]
         host_mnt_path = words[3]
-        print("##vso[task.logissue type=warning;]{0} {1} {2}".format("TEST", host_mnt_path, docker_mnt_path))
+
         if dockerpath.startswith(docker_mnt_path):
             print("##vso[task.logissue type=warning;]{0} {1} {2}".format("MATCHED", dockerpath, docker_mnt_path))
             dockerpath = ''.join([
